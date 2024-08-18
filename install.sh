@@ -7,8 +7,9 @@ install_script() {
     # 获取备份时间
     BACKUP_TIME=$(dialog --inputbox "请输入每天的备份时间（24小时制，例如 04:00）" 8 60 "04:00" 2>&1 >/dev/tty)
 
-    # 下载主备份脚本
-    download_backup_script
+    # 复制主备份脚本到安装路径
+    cp "$(dirname "$0")/zfs_backup.sh" "$INSTALL_PATH/zfs_backup.sh"
+    chmod +x "$INSTALL_PATH/zfs_backup.sh"
 
     # 获取配置
     get_config
@@ -23,20 +24,6 @@ install_script() {
         fi
     else
         show_info "安装已取消"
-    fi
-}
-
-download_backup_script() {
-    SCRIPT_URL="https://raw.githubusercontent.com/your_username/your_repo/main/zfs_backup.sh"
-    SCRIPT_PATH="${INSTALL_PATH}/zfs_backup.sh"
-
-    show_info "正在下载主备份脚本..."
-    if curl -sSL "$SCRIPT_URL" -o "$SCRIPT_PATH"; then
-        chmod +x "$SCRIPT_PATH"
-        show_info "下载成功"
-    else
-        show_error "下载失败，请检查网络连接或脚本 URL"
-        exit 1
     fi
 }
 
@@ -70,7 +57,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=$SCRIPT_PATH
+ExecStart=$INSTALL_PATH/zfs_backup.sh
 User=root
 
 [Install]
@@ -94,4 +81,12 @@ EOF
     systemctl daemon-reload
     systemctl enable zfs-backup.timer
     systemctl start zfs-backup.timer
+
+    # 保存配置到文件
+    mkdir -p /etc/zfs_backup
+    echo "install_path: $INSTALL_PATH" > /etc/zfs_backup/config.yaml
+    for key in "${!config[@]}"; do
+        echo "$key: ${config[$key]}" >> /etc/zfs_backup/config.yaml
+    done
+    chmod 600 /etc/zfs_backup/config.yaml
 }
