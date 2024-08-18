@@ -18,25 +18,25 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # 读取配置
-SOURCE_DATASET=$(yq e '.source_dataset' "$CONFIG_FILE")
-REMOTE_HOST=$(yq e '.remote_host' "$CONFIG_FILE")
-REMOTE_DATASET=$(yq e '.remote_dataset' "$CONFIG_FILE")
-SNAPSHOT_RETENTION_DAYS=$(yq e '.snapshot_retention_days' "$CONFIG_FILE")
-TELEGRAM_BOT_TOKEN=$(yq e '.telegram_bot_token' "$CONFIG_FILE")
-TELEGRAM_CHAT_ID=$(yq e '.telegram_chat_id' "$CONFIG_FILE")
-ENABLE_TELEGRAM_NOTIFY=$(yq e '.enable_telegram_notify' "$CONFIG_FILE")
-CUSTOM_REPORT_HEADER=$(yq e '.custom_report_header' "$CONFIG_FILE")
-LOG_FILE=$(yq e '.log_file' "$CONFIG_FILE")
-SSH_CMD=$(yq e '.ssh_cmd' "$CONFIG_FILE")
+config=$(yq e -o=json /etc/zfs_backup/config.yaml)
 
-# 解析 REMOTE_HOST
-REMOTE_USER=$(echo $REMOTE_HOST | cut -d@ -f1)
-REMOTE_HOST_PORT=$(echo $REMOTE_HOST | cut -d@ -f2)
-REMOTE_HOSTNAME=$(echo $REMOTE_HOST_PORT | cut -d' ' -f1)
-REMOTE_PORT=$(echo $REMOTE_HOST_PORT | grep -oP '(?<=p )\d+' || echo "22")
+# 构建 SSH 命令
+ssh_command="ssh -p $(yq e '.remote_port // "22"' /etc/zfs_backup/config.yaml)"
+if [ "$(yq e '.ssh_key_path' /etc/zfs_backup/config.yaml)" != "null" ]; then
+    ssh_command+=" -i $(yq e '.ssh_key_path' /etc/zfs_backup/config.yaml)"
+elif [ "$(yq e '.ssh_key' /etc/zfs_backup/config.yaml)" != "null" ]; then
+    ssh_command+=" -o IdentityFile=<(echo '$(yq e '.ssh_key' /etc/zfs_backup/config.yaml)')"
+fi
 
-# 构建 SSH 命令，包含 sudo
-SSH_COMMAND="$SSH_CMD -p $REMOTE_PORT $REMOTE_USER@$REMOTE_HOSTNAME sudo"
+ssh_command+=" -o StrictHostKeyChecking=no"
+
+# 如果密钥没有被限制，我们需要在这里添加命令限制
+if [ "$(yq e '.ssh_key_restricted // "true"' /etc/zfs_backup/config.yaml)" = "false" ]; then
+    zfs_commands="sudo zfs list -H -t snapshot -o name,sudo zfs destroy,sudo zfs receive,sudo zfs rename"
+    ssh_command="$ssh_command \"${zfs_commands// /}\""
+fi
+
+# 在后续的脚本中使用 $ssh_command 来执行远程命令
 
 # 生成易读的日期时间字符串
 get_readable_date() {
