@@ -2,8 +2,8 @@
 
 # ZFS 备份系统管理脚本
 # 版本: 1.0
-# 作者: 胡桃
-# 日期: 2024年8月18日
+# 作者: [您的名字]
+# 日期: [当前日期]
 #
 # 介绍:
 # 这个脚本用于管理 ZFS 备份系统的安装、配置和卸载。它提供了一个交互式界面，
@@ -41,7 +41,7 @@ source "$(dirname "$0")/test.sh"
 # 主函数
 main() {
     check_root
-    install_dependencies
+    check_compatibility
     main_menu
 }
 
