@@ -13,7 +13,8 @@ uninstall_script() {
         rm -f /etc/systemd/system/zfs-backup.timer
 
         # 删除主脚本
-        rm -f "$(get_config_value install_path)/zfs_backup.sh"
+        local install_path=$(yq e '.install_path' /etc/zfs_backup/config.yaml)
+        rm -f "${install_path}/zfs_backup.sh"
 
         # 删除配置文件
         rm -rf /etc/zfs_backup
@@ -26,3 +27,8 @@ uninstall_script() {
         show_info "卸载已取消"
     fi
 }
+
+# 如果直接运行此脚本，执行卸载函数
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    uninstall_script
+fi
