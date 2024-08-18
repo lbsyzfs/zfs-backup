@@ -9,8 +9,25 @@
 # 6. 通过Telegram发送备份过程的详细报告
 # 使用方法：直接运行脚本，无需额外参数
 
+
 # 加载配置文件
-source /etc/zfs_backup/config.yaml
+CONFIG_FILE="/etc/zfs_backup/config.yaml"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "错误：找不到配置文件 $CONFIG_FILE"
+    exit 1
+fi
+
+# 读取配置
+SOURCE_DATASET=$(yq e '.source_dataset' "$CONFIG_FILE")
+REMOTE_HOST=$(yq e '.remote_host' "$CONFIG_FILE")
+REMOTE_DATASET=$(yq e '.remote_dataset' "$CONFIG_FILE")
+SNAPSHOT_RETENTION_DAYS=$(yq e '.snapshot_retention_days' "$CONFIG_FILE")
+TELEGRAM_BOT_TOKEN=$(yq e '.telegram_bot_token' "$CONFIG_FILE")
+TELEGRAM_CHAT_ID=$(yq e '.telegram_chat_id' "$CONFIG_FILE")
+ENABLE_TELEGRAM_NOTIFY=$(yq e '.enable_telegram_notify' "$CONFIG_FILE")
+CUSTOM_REPORT_HEADER=$(yq e '.custom_report_header' "$CONFIG_FILE")
+LOG_FILE=$(yq e '.log_file' "$CONFIG_FILE")
+SSH_CMD=$(yq e '.ssh_cmd' "$CONFIG_FILE")
 
 # 解析 REMOTE_HOST
 REMOTE_USER=$(echo $REMOTE_HOST | cut -d@ -f1)
