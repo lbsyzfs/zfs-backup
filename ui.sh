@@ -81,3 +81,21 @@ show_file() {
     local file="$2"
     dialog --title "$title" --textbox "$file" 20 70
 }
+
+# 导出配置
+export_config() {
+    local export_path=$(dialog --inputbox "请输入导出配置的路径" 8 60 "./zfs_backup_config_export.yaml" 2>&1 >/dev/tty)
+    cp /etc/zfs_backup/config.yaml "$export_path"
+    show_info "配置已导出到: $export_path"
+}
+
+# 导入配置
+import_config() {
+    local import_path=$(dialog --inputbox "请输入要导入的配置文件路径" 8 60 "" 2>&1 >/dev/tty)
+    if [ -f "$import_path" ]; then
+        cp "$import_path" /etc/zfs_backup/config.yaml
+        show_info "配置已从 $import_path 导入"
+    else
+        show_error "找不到指定的配置文件"
+    fi
+}
