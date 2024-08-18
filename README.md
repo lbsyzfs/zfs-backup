@@ -25,17 +25,18 @@ ZFS 备份系统是一个用于自动化 ZFS 数据集备份的脚本集合。�
 
 1. 克隆仓库：
    ```
-   git clone https://github.com/your_username/zfs-backup-system.git
+   git clone https://github.com/lbsyzfs/zfs-backup
    ```
 
 2. 进入项目目录：
    ```
-   cd zfs-backup-system
+   chmod +x -R zfs-backup
+   cd zfs-backup
    ```
 
 3. 运行安装脚本：
    ```
-   sudo ./setup.sh
+   sudo ./zfs_backup_manager.sh
    ```
 
 4. 按照提示完成配置。
