@@ -1,0 +1,15 @@
+# 配置项
+SOURCE_DATASET="poolname/dataset"  # 源数据集名称
+REMOTE_HOST="user@host -p port"  # 远程主机信息，包括SSH端口
+REMOTE_DATASET="remotepoolname/dataset"  # 远程数据集名称
+SNAPSHOT_RETENTION_DAYS=7  # 本地快照保留天数
+LOG_FILE="/var/log/zfs_backup.log"  # 日志文件路径
+SSH_CMD="ssh"  # SSH 命令（如果需要特殊的 SSH 选项）
+
+# Telegram Bot 配置
+TELEGRAM_BOT_TOKEN=""  # Telegram Bot Token
+TELEGRAM_CHAT_ID=""  # Telegram Chat ID
+ENABLE_TELEGRAM_NOTIFY=true  # 是否启用 Telegram 通知
+
+# 自定义报告标题
+CUSTOM_REPORT_HEADER=""  # 在这里添加您想要的自定义消息
