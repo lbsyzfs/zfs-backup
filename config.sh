@@ -123,13 +123,14 @@ get_config() {
 
 show_key_restriction_info() {
     local pub_key="$1"
-    local zfs_commands="sudo zfs list -H -t snapshot -o name,
+    local zfs_commands="sudo zfs list,
+                        sudo zfs list -H -t snapshot -o name,
                         sudo zfs destroy,
                         sudo zfs receive,
                         sudo zfs rename"
     local restricted_pub_key="command=\"${zfs_commands// /}\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ${pub_key}"
     
-    dialog --msgbox "请在远程主机的 ~/.ssh/authorized_keys 文件中，将该公钥行替换为以下内容：\n\n$restricted_pub_key\n\n这将限制该密钥只能执行以下 ZFS 操作：\n- 列出快照\n- 删除快照\n- 接收快照\n- 重命名快照\n\n这些权限足够进行备份操作，同时最大限度地保护远程系统的安全。" 20 70
+    dialog --msgbox "请在远程主机的 ~/.ssh/authorized_keys 文件中，将该公钥行替换为以下内容：\n\n$restricted_pub_key\n\n这将限制该密钥只能执行以下 ZFS 操作：\n- 列出存储池和快照\n- 删除快照\n- 接收快照\n- 重命名快照\n\n这些权限足够进行备份操作和基本测试，同时仍然保护远程系统的安全。" 20 70
 }
 
 generate_ssh_key() {
