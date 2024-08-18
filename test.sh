@@ -54,6 +54,7 @@ test_configuration() {
         return 1
     fi
 
+
     # 测试 Telegram 消息发送
     current_test=$((current_test + 1))
     show_progress "测试进度" "测试 Telegram 消息发送..." $((current_test * 100 / total_tests))
