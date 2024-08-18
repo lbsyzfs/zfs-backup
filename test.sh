@@ -10,27 +10,26 @@ test_configuration() {
     current_test=$((current_test + 1))
     show_progress "测试进度" "测试本地数据集..." $((current_test * 100 / total_tests))
     if zfs list "$(get_config_value source_dataset)" > /dev/null 2>&1; then
-        show_info "✓ 本地数据集 $(get_config_value source_dataset) 存在"
+        show_info "✅ 本地数据集 $(get_config_value source_dataset) 存在"
     else
-        show_error "✗ 错误: 本地数据集 $(get_config_value source_dataset) 不存在"
+        show_error "❌ 错误: 本地数据集 $(get_config_value source_dataset) 不存在"
         return 1
     fi
 
     # 解析 SSH 命令和远程主机信息
     local ssh_cmd="$(get_config_value ssh_cmd)"
     local remote_host="$(get_config_value remote_host)"
+    local remote_port="$(get_config_value remote_port)"
     local remote_user=$(echo $remote_host | cut -d@ -f1)
-    local remote_host_port=$(echo $remote_host | cut -d@ -f2)
-    local remote_hostname=$(echo $remote_host_port | cut -d' ' -f1)
-    local remote_port=$(echo $remote_host_port | grep -oP '(?<=-p )\d+' || echo "22")
+    local remote_hostname=$(echo $remote_host | cut -d@ -f2)
 
     # 测试 SSH 连接
     current_test=$((current_test + 1))
     show_progress "测试进度" "测试 SSH 连接..." $((current_test * 100 / total_tests))
     if $ssh_cmd -p $remote_port -o ConnectTimeout=5 $remote_user@$remote_hostname echo "SSH connection successful" > /dev/null 2>&1; then
-        show_info "✓ SSH 连接成功"
+        show_info "✅ SSH 连接成功"
     else
-        show_error "✗ 错误: 无法连接到远程主机 $remote_host"
+        show_error "❌ 错误: 无法连接到远程主机 $remote_host"
         return 1
     fi
 
@@ -38,9 +37,9 @@ test_configuration() {
     current_test=$((current_test + 1))
     show_progress "测试进度" "测试远程 sudo 权限..." $((current_test * 100 / total_tests))
     if $ssh_cmd -p $remote_port $remote_user@$remote_hostname "sudo -n true" > /dev/null 2>&1; then
-        show_info "✓ 远程 sudo 权限正常"
+        show_info "✅ 远程 sudo 权限正常"
     else
-        show_error "✗ 错误: 远程主机上无法使用 sudo，或需要密码"
+        show_error "❌ 错误: 远程主机上无法使用 sudo，或需要密码"
         return 1
     fi
 
@@ -48,10 +47,10 @@ test_configuration() {
     current_test=$((current_test + 1))
     show_progress "测试进度" "测试远程存储池..." $((current_test * 100 / total_tests))
     local remote_pool=$(echo $(get_config_value remote_dataset) | cut -d/ -f1)
-    if $ssh_cmd -p $remote_port $remote_user@$remote_hostname "sudo zpool list $remote_pool" > /dev/null 2>&1; then
-        show_info "✓ 远程存储池 $remote_pool 存在"
+    if $ssh_cmd -p $remote_port $remote_user@$remote_hostname "sudo zfs list $remote_pool" > /dev/null 2>&1; then
+        show_info "✅ 远程存储池 $remote_pool 存在"
     else
-        show_error "✗ 错误: 远程存储池 $remote_pool 不存在"
+        show_error "❌ 错误: 远程存储池 $remote_pool 不存在"
         return 1
     fi
 
@@ -65,15 +64,15 @@ test_configuration() {
              -d text="$test_message")
         
         if echo "$telegram_response" | grep -q '"ok":true'; then
-            show_info "✓ Telegram 测试消息发送成功"
+            show_info "✅ Telegram 测试消息发送成功"
         else
-            show_error "✗ 错误: 无法发送 Telegram 测试消息"
+            show_error "❌ 错误: 无法发送 Telegram 测试消息"
             return 1
         fi
     else
         show_info "Telegram 通知未启用，跳过测试"
     fi
 
-    show_info "所有测试通过"
+    show_info "✅ 所有测试通过"
     return 0
 }
