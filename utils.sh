@@ -28,6 +28,8 @@ check_root() {
 
 # 检查系统兼容性
 check_compatibility() {
+    echo "正在检查系统兼容性..."
+
     # 检查操作系统
     if [ -f /etc/os-release ]; then
         . /etc/os-release
@@ -42,38 +44,61 @@ check_compatibility() {
                 OS_TYPE="gentoo"
                 ;;
             *)
-                handle_error "不支持的操作系统: $ID"
+                echo "错误: 不支持的操作系统: $ID"
+                exit 1
                 ;;
         esac
     elif [ -f /etc/gentoo-release ]; then
         OS_TYPE="gentoo"
     else
-        handle_error "无法确定操作系统类型"
+        echo "错误: 无法确定操作系统类型"
+        exit 1
     fi
 
-    # 检查必要的命令
+    # 首先检查并安装 dialog
+    if ! command -v dialog &> /dev/null; then
+        echo "正在安装 dialog..."
+        case "$OS_TYPE" in
+            debian)
+                sudo apt-get update && sudo apt-get install -y dialog
+                ;;
+            arch)
+                sudo pacman -Sy --noconfirm dialog
+                ;;
+            gentoo)
+                sudo emerge --ask n dev-util/dialog
+                ;;
+        esac
+        if ! command -v dialog &> /dev/null; then
+            echo "错误: 无法安装 dialog"
+            exit 1
+        fi
+    fi
+
+    # 使用 dialog 检查其他依赖
     local missing_deps=()
-    for cmd in zfs rsync curl yq dialog; do
-        if ! command_exists $cmd; then
+    for cmd in zfs rsync curl yq; do
+        if ! command -v $cmd &> /dev/null; then
             missing_deps+=("$cmd")
         fi
     done
 
     if [ ${#missing_deps[@]} -ne 0 ]; then
-        show_error "以下依赖未安装: ${missing_deps[*]}"
-        if dialog --yesno "是否尝试安装缺失的依赖？" 8 40; then
+        if dialog --yesno "以下依赖未安装: ${missing_deps[*]}\n\n是否尝试安装缺失的依赖？" 10 60; then
             install_dependencies "${missing_deps[@]}"
         else
-            handle_error "请手动安装缺失的依赖后重试。"
+            dialog --msgbox "请手动安装缺失的依赖后重试。" 8 40
+            exit 1
         fi
     fi
 
     # 检查 systemd
     if ! systemctl --version &> /dev/null; then
-        handle_error "系统不支持 systemd"
+        dialog --msgbox "错误: 系统不支持 systemd" 8 40
+        exit 1
     fi
 
-    show_info "系统兼容性检查通过"
+    dialog --msgbox "系统兼容性检查通过" 8 40
 }
 
 # 安装依赖
@@ -93,7 +118,7 @@ install_dependencies() {
     esac
 
     # 特别处理 yq 的安装（如果需要）
-    if [[ " ${deps[*]} " =~ " yq " ]] && ! command_exists yq; then
+    if [[ " ${deps[*]} " =~ " yq " ]] && ! command -v yq &> /dev/null; then
         install_yq
     fi
 }
@@ -103,11 +128,12 @@ install_yq() {
     local YQ_VERSION="v4.30.6"
     local BINARY_URL="https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64"
     
-    show_info "正在安装 yq..."
+    dialog --infobox "正在安装 yq..." 3 30
     if sudo wget "$BINARY_URL" -O /usr/local/bin/yq && sudo chmod +x /usr/local/bin/yq; then
-        show_info "yq 安装成功"
+        dialog --msgbox "yq 安装成功" 5 30
     else
-        handle_error "yq 安装失败"
+        dialog --msgbox "yq 安装失败" 5 30
+        exit 1
     fi
 }
 
