@@ -256,7 +256,7 @@ if [ -n "$REMOTE_SNAPSHOT_EXISTS" ]; then
     
     if [ -n "$LATEST_LOCAL_SNAPSHOT" ]; then
         log "使用最新的本地快照进行增量传输: $LATEST_LOCAL_SNAPSHOT"
-        if zfs send -i "$LATEST_LOCAL_SNAPSHOT" "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -F $REMOTE_DATASET"; then
+        if zfs send -i "$LATEST_LOCAL_SNAPSHOT" "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -o mountpoint=none -F $REMOTE_DATASET"; then
             log "增量快照发送成功"
             append_to_message "✅ 远程快照已增量更新"
             delete_same_day_snapshots  # 删除同一天的旧快照
@@ -269,7 +269,7 @@ if [ -n "$REMOTE_SNAPSHOT_EXISTS" ]; then
         fi
     else
         log "未找到之前的本地快照，执行完整传输"
-        if zfs send "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -F $REMOTE_DATASET"; then
+        if zfs send "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -o mountpoint=none -F $REMOTE_DATASET"; then
             log "完整快照发送成功"
             append_to_message "✅ 完整快照已发送到远程系统"
             delete_same_day_snapshots  # 删除同一天的旧快照
@@ -286,7 +286,7 @@ else
     log "远程快照不存在。执行完整传输。"
     append_to_message "ℹ️ 正在向远程系统发送完整快照"
     
-    if zfs send "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -F $REMOTE_DATASET"; then
+    if zfs send "$LOCAL_SNAPSHOT_NAME" | eval "$SSH_COMMAND zfs receive -o mountpoint=none -F $REMOTE_DATASET"; then
         log "完整快照发送成功"
         append_to_message "✅ 完整快照已发送到远程系统"
         delete_same_day_snapshots  # 删除同一天的旧快照
